@@ -8,8 +8,10 @@ Twitchチャットをリアルタイムで監視し、非日本語コメント�
 - Twitchチャットのリアルタイム表示
 - 非日本語コメントをGemini 3 Flashで自動翻訳
 - 配信者の音声をリアルタイムで文字起こし (OpenAI Whisper API)
+- VADベースの発話区間検出で高精度な音声分割
 - 配信者の発言を自動翻訳 (日本語 → 英語 / その他 → 日本語)
 - 過去の会話と配信者の発言を考慮した文脈のある翻訳
+- 文字起こしプロセスのエラー時に自動リトライ
 - 2ペインUI (左: 配信者の文字起こし+翻訳、右: チャット+翻訳)
 - 手動翻訳機能 (日本語 → 英語 / その他 → 日本語)
 - 接続チャンネル履歴のサジェスト表示
@@ -50,6 +52,17 @@ http://localhost:3000 を開き、チャンネル名を入力して「開始」�
 
 - [streamlink](https://streamlink.github.io/) — 配信ストリームの取得
 - [ffmpeg](https://ffmpeg.org/) — 音声の抽出・変換
+
+## プロジェクト構成
+
+```
+server.js              # エントリポイント (Express + Socket.IO + TMI の配線層)
+lib/db.js              # SQLite スキーマ + クエリ
+lib/audio.js           # 音声ユーティリティ (WAV変換, RMS計算)
+lib/translator.js      # Gemini翻訳 (チャット・文字起こし・手動)
+lib/transcription.js   # 文字起こしパイプライン (VAD・Whisper・リトライ)
+public/index.html      # Web UI
+```
 
 ## 技術スタック
 
