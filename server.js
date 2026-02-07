@@ -6,7 +6,7 @@ const tmi = require("tmi.js");
 const { GoogleGenAI } = require("@google/genai");
 const OpenAI = require("openai");
 
-const { upsertChannel, getChannels, insertMessage, insertTranscription } = require("./lib/db");
+const { upsertChannel, getChannels, insertMessage, insertTranscription, getRecentMessages } = require("./lib/db");
 const { createTranslator } = require("./lib/translator");
 const { Transcriber } = require("./lib/transcription");
 
@@ -22,8 +22,45 @@ let tmiClient = null;
 let currentChannel = null;
 let transcriptionId = 0;
 
+// TTS readout detection
+const TTS_WINDOW_SECONDS = 30;
+const TTS_SIMILARITY_THRESHOLD = 0.5;
+
+function normalizeText(text) {
+  return text
+    .replace(/[\s\u3000]+/g, "")
+    .replace(/[、。！？,.!?…・「」『』（）()\[\]【】:：;；～~\-]/g, "")
+    .toLowerCase();
+}
+
+function isTTSMatch(transcriptionText, chatMessage) {
+  const nt = normalizeText(transcriptionText);
+  const nc = normalizeText(chatMessage);
+  if (!nt || !nc || nc.length < 2) return false;
+  if (nt.includes(nc) || nc.includes(nt)) return true;
+
+  const bigramsA = new Set();
+  for (let i = 0; i < nt.length - 1; i++) bigramsA.add(nt.slice(i, i + 2));
+  const bigramsB = new Set();
+  for (let i = 0; i < nc.length - 1; i++) bigramsB.add(nc.slice(i, i + 2));
+
+  let intersection = 0;
+  for (const bg of bigramsA) {
+    if (bigramsB.has(bg)) intersection++;
+  }
+  return (2 * intersection) / (bigramsA.size + bigramsB.size) >= TTS_SIMILARITY_THRESHOLD;
+}
+
+function isTTSReadout(text) {
+  if (!currentChannel) return false;
+  const windowAgo = new Date(Date.now() - TTS_WINDOW_SECONDS * 1000).toISOString();
+  const recentChats = getRecentMessages.all(currentChannel, windowAgo);
+  return recentChats.some((chat) => isTTSMatch(text, chat.message));
+}
+
 const transcriber = new Transcriber(openai, {
   onTranscription: (text) => {
+    if (isTTSReadout(text)) return;
     const timestamp = new Date().toISOString();
     if (currentChannel) {
       insertTranscription.run(currentChannel, text, timestamp);
