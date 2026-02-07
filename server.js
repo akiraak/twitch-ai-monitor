@@ -200,8 +200,25 @@ function createWavBuffer(pcmData) {
   return Buffer.concat([header, pcmData]);
 }
 
+function calcRMS(pcmBuffer) {
+  let sumSq = 0;
+  for (let i = 0; i < pcmBuffer.length - 1; i += 2) {
+    const sample = pcmBuffer.readInt16LE(i);
+    sumSq += sample * sample;
+  }
+  const numSamples = pcmBuffer.length / 2;
+  return Math.sqrt(sumSq / numSamples);
+}
+
+const SILENCE_THRESHOLD = 300; // 16-bit PCM RMS threshold
+
 async function transcribeChunk(pcmChunk) {
   try {
+    const rms = calcRMS(pcmChunk);
+    if (rms < SILENCE_THRESHOLD) {
+      return; // Skip silent chunks to avoid Whisper hallucinations
+    }
+
     const wavBuffer = createWavBuffer(pcmChunk);
     const file = new File([wavBuffer], "audio.wav", { type: "audio/wav" });
 
