@@ -48,6 +48,7 @@ npm start  # node server.js — デフォルト http://localhost:3000
 - チャンネル接続時に自動で音声文字起こしを開始 (streamlink → ffmpeg → Whisper API)
 - 文字起こし結果はSQLiteに保存され、非日本語の場合はGeminiで翻訳
 - Web UIは2ペイン構成 (左: 配信者の文字起こし+翻訳、右: チャット+翻訳)
+- 画面下部に手動翻訳エリア (日本語 → 英語 / その他 → 日本語)
 
 ## DB スキーマ
 
@@ -79,6 +80,8 @@ npm start  # node server.js — デフォルト http://localhost:3000
 ### クライアント → サーバー
 - `join-channel` (channel: string) — チャンネルに接続
 - `leave-channel` — チャンネルから切断
+- `manual-translate` (text: string) — 手動翻訳リクエスト
+
 ### サーバー → クライアント
 - `current-channel` (channel) — 接続中のチャンネル (再接続時)
 - `channel-joined` (channel) — 接続成功
@@ -89,6 +92,7 @@ npm start  # node server.js — デフォルト http://localhost:3000
 - `channel-list` (string[]) — 保存済みチャンネル候補一覧
 - `transcription` ({id, text, timestamp}) — 音声文字起こし結果
 - `transcription-translation` ({id, translation}) — 文字起こしの翻訳結果
+- `manual-translate-result` (translation: string) — 手動翻訳結果
 
 ## コーディング規約
 

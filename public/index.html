@@ -162,6 +162,70 @@
       font-size: 13px;
       line-height: 1.4;
     }
+    #translator {
+      border-top: 1px solid #303032;
+      background: #18181b;
+    }
+    #translator-header {
+      display: flex;
+      align-items: center;
+      padding: 4px 16px;
+      border-bottom: 1px solid #303032;
+      background: #1a1a1d;
+    }
+    #translator-header .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #00b894;
+    }
+    #translator-header .hint {
+      font-size: 11px;
+      color: #6b6b7b;
+      margin-left: auto;
+    }
+    #translator-body {
+      display: flex;
+    }
+    .translate-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .translate-pane + .translate-pane {
+      border-left: 1px solid #303032;
+    }
+    .translate-pane-label {
+      padding: 2px 16px;
+      font-size: 11px;
+      color: #6b6b7b;
+      background: #141416;
+    }
+    #translator textarea {
+      flex: 1;
+      background: #0e0e10;
+      color: #efeff1;
+      border: none;
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      height: 60px;
+    }
+    #translator textarea:focus {
+      outline: none;
+    }
+    #translator textarea::placeholder {
+      color: #6b6b7b;
+    }
+    #translate-output {
+      padding: 8px 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #efeff1;
+      background: #0e0e10;
+      overflow-y: auto;
+      height: 60px;
+    }
   </style>
 </head>
 <body>
@@ -182,6 +246,22 @@
     <div id="pane-chat" class="pane">
       <div class="pane-header">チャット</div>
       <div id="chat" class="pane-content"></div>
+    </div>
+  </div>
+  <div id="translator">
+    <div id="translator-header">
+      <span class="label">翻訳</span>
+      <span class="hint">日本語 → 英語 / その他 → 日本語 (Enter で翻訳)</span>
+    </div>
+    <div id="translator-body">
+      <div class="translate-pane">
+        <div class="translate-pane-label">入力</div>
+        <textarea id="translate-input" placeholder="翻訳するテキストを入力"></textarea>
+      </div>
+      <div class="translate-pane">
+        <div class="translate-pane-label">翻訳結果</div>
+        <div id="translate-output"></div>
+      </div>
     </div>
   </div>
 
@@ -331,6 +411,23 @@
       transDiv.textContent = data.translation;
       div.appendChild(transDiv);
       autoScroll(transcriptionPane);
+    });
+
+    const translateInput = document.getElementById("translate-input");
+    const translateOutput = document.getElementById("translate-output");
+
+    translateInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const text = translateInput.value.trim();
+        if (!text) return;
+        translateOutput.textContent = "翻訳中...";
+        socket.emit("manual-translate", text);
+      }
+    });
+
+    socket.on("manual-translate-result", (result) => {
+      translateOutput.textContent = result;
     });
 
     function escapeHtml(str) {

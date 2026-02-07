@@ -371,6 +371,31 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("manual-translate", async (text) => {
+    if (!text || typeof text !== "string") return;
+    text = text.trim();
+    if (!text) return;
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `翻訳対象: ${text}`,
+        config: {
+          systemInstruction: `あなたは翻訳者です。
+
+ルール:
+- 入力が日本語の場合、英語に翻訳してください
+- 入力が日本語以外の場合、日本語に翻訳してください
+- 翻訳文のみを返してください。説明や注釈は不要です`,
+          thinkingConfig: { thinkingLevel: "minimal" },
+        },
+      });
+      socket.emit("manual-translate-result", response.text.trim());
+    } catch (e) {
+      console.error("Manual translation error:", e.message);
+      socket.emit("manual-translate-result", "翻訳エラー");
+    }
+  });
+
   socket.on("leave-channel", async () => {
     stopTranscription();
     if (tmiClient) {
