@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twitch Chat Monitor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0e0e10;
+      color: #efeff1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #18181b;
+      padding: 12px 20px;
+      border-bottom: 1px solid #303032;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    #header-channel {
+      color: #bf94ff;
+      margin-left: 8px;
+      text-decoration: none;
+    }
+    #header-channel:hover {
+      text-decoration: underline;
+    }
+    #status {
+      font-size: 12px;
+      font-weight: 400;
+      color: #adadb8;
+      margin-left: 12px;
+    }
+    #status.connected { color: #00e676; }
+    #controls {
+      background: #18181b;
+      padding: 8px 20px;
+      border-bottom: 1px solid #303032;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #channel-input {
+      background: #0e0e10;
+      border: 1px solid #303032;
+      color: #efeff1;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 200px;
+    }
+    #channel-input:focus {
+      outline: none;
+      border-color: #bf94ff;
+    }
+    #channel-input:disabled {
+      opacity: 0.5;
+    }
+    #btn-start, #btn-stop {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #btn-start {
+      background: #9147ff;
+      color: #fff;
+    }
+    #btn-start:hover { background: #772ce8; }
+    #btn-start:disabled { opacity: 0.5; cursor: default; }
+    #btn-stop {
+      background: #eb0400;
+      color: #fff;
+    }
+    #btn-stop:hover { background: #c00; }
+    .hidden { display: none !important; }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 16px;
+    }
+    .msg {
+      padding: 4px 0;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+    .msg .time {
+      color: #6b6b7b;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+    .msg .user {
+      color: #bf94ff;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .msg .text {
+      color: #efeff1;
+    }
+    .msg .translation {
+      margin-left: 24px;
+      margin-top: 2px;
+      padding-left: 8px;
+      border-left: 2px solid #9147ff;
+      color: #adadb8;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    Twitch Chat Monitor<a id="header-channel" href="#" target="_blank" rel="noopener"></a><span id="status">connecting...</span>
+  </header>
+  <div id="controls">
+    <input type="text" id="channel-input" placeholder="channel name" list="channel-list" autocomplete="off">
+    <datalist id="channel-list"></datalist>
+    <button id="btn-start">開始</button>
+    <button id="btn-stop" class="hidden">停止</button>
+  </div>
+  <div id="chat"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const chat = document.getElementById("chat");
+    const status = document.getElementById("status");
+    const headerChannel = document.getElementById("header-channel");
+    const channelInput = document.getElementById("channel-input");
+    const btnStart = document.getElementById("btn-start");
+    const btnStop = document.getElementById("btn-stop");
+    const socket = io();
+
+    function setConnectedUI(channel) {
+      channelInput.disabled = true;
+      btnStart.classList.add("hidden");
+      btnStop.classList.remove("hidden");
+      headerChannel.textContent = "#" + channel;
+      headerChannel.href = "https://www.twitch.tv/" + channel;
+    }
+
+    function setDisconnectedUI() {
+      channelInput.disabled = false;
+      btnStart.classList.remove("hidden");
+      btnStop.classList.add("hidden");
+      headerChannel.textContent = "";
+      headerChannel.href = "#";
+    }
+
+    btnStart.addEventListener("click", () => {
+      const ch = channelInput.value.trim();
+      if (!ch) return;
+      btnStart.disabled = true;
+      socket.emit("join-channel", ch);
+    });
+
+    btnStop.addEventListener("click", () => {
+      socket.emit("leave-channel");
+    });
+
+    channelInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") btnStart.click();
+    });
+
+    socket.on("connect", () => {
+      status.textContent = "connected";
+      status.className = "connected";
+    });
+
+    socket.on("disconnect", () => {
+      status.textContent = "disconnected";
+      status.className = "";
+    });
+
+    socket.on("current-channel", (channel) => {
+      setConnectedUI(channel);
+    });
+
+    socket.on("channel-joined", (channel) => {
+      chat.innerHTML = "";
+      btnStart.disabled = false;
+      setConnectedUI(channel);
+    });
+
+    socket.on("channel-left", () => {
+      btnStart.disabled = false;
+      setDisconnectedUI();
+    });
+
+    socket.on("channel-error", (msg) => {
+      btnStart.disabled = false;
+      alert(msg);
+    });
+
+    socket.on("channel-list", (channels) => {
+      const datalist = document.getElementById("channel-list");
+      datalist.innerHTML = "";
+      channels.forEach((ch) => {
+        const opt = document.createElement("option");
+        opt.value = ch;
+        datalist.appendChild(opt);
+      });
+    });
+
+    socket.on("chat-message", (data) => {
+      const div = document.createElement("div");
+      div.className = "msg";
+      div.dataset.msgId = data.id;
+
+      const time = new Date(data.timestamp).toLocaleTimeString();
+      div.innerHTML =
+        `<span class="time">${time}</span>` +
+        `<span class="user">${escapeHtml(data.username)}:</span>` +
+        `<span class="text">${escapeHtml(data.message)}</span>`;
+
+      chat.appendChild(div);
+
+      // auto-scroll if near bottom
+      const threshold = 100;
+      const atBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < threshold;
+      if (atBottom) {
+        chat.scrollTop = chat.scrollHeight;
+      }
+    });
+
+    socket.on("chat-translation", (data) => {
+      const msgDiv = chat.querySelector(`[data-msg-id="${data.id}"]`);
+      if (!msgDiv) return;
+
+      const transDiv = document.createElement("div");
+      transDiv.className = "translation";
+      transDiv.textContent = data.translation;
+      msgDiv.appendChild(transDiv);
+
+      // auto-scroll
+      const threshold = 100;
+      const atBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < threshold;
+      if (atBottom) {
+        chat.scrollTop = chat.scrollHeight;
+      }
+    });
+
+    function escapeHtml(str) {
+      const d = document.createElement("div");
+      d.textContent = str;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>
