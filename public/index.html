@@ -153,11 +153,20 @@
     .transcription .text {
       color: #e0c080;
     }
+    .transcription .translation {
+      margin-left: 24px;
+      margin-top: 2px;
+      padding-left: 8px;
+      border-left: 2px solid #e67e22;
+      color: #adadb8;
+      font-size: 13px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
   <header>
-    Twitch Chat Monitor<a id="header-channel" href="#" target="_blank" rel="noopener"></a><span id="status">connecting...</span>
+    Twitch Chat Monitor<a id="header-channel" href="#" target="_blank" rel="noopener"></a><span id="status">待機中</span>
   </header>
   <div id="controls">
     <input type="text" id="channel-input" placeholder="channel name" list="channel-list" autocomplete="off">
@@ -227,17 +236,19 @@
     });
 
     socket.on("connect", () => {
-      status.textContent = "connected";
-      status.className = "connected";
+      status.textContent = "待機中";
+      status.className = "";
     });
 
     socket.on("disconnect", () => {
-      status.textContent = "disconnected";
+      status.textContent = "切断";
       status.className = "";
     });
 
     socket.on("current-channel", (channel) => {
       setConnectedUI(channel);
+      status.textContent = "接続中";
+      status.className = "connected";
     });
 
     socket.on("channel-joined", (channel) => {
@@ -245,11 +256,15 @@
       transcriptionPane.innerHTML = "";
       btnStart.disabled = false;
       setConnectedUI(channel);
+      status.textContent = "接続中";
+      status.className = "connected";
     });
 
     socket.on("channel-left", () => {
       btnStart.disabled = false;
       setDisconnectedUI();
+      status.textContent = "待機中";
+      status.className = "";
     });
 
     socket.on("channel-error", (msg) => {
@@ -296,6 +311,7 @@
     socket.on("transcription", (data) => {
       const div = document.createElement("div");
       div.className = "transcription";
+      div.dataset.transcriptionId = data.id;
 
       const time = new Date(data.timestamp).toLocaleTimeString();
       div.innerHTML =
@@ -303,6 +319,17 @@
         `<span class="text">${escapeHtml(data.text)}</span>`;
 
       transcriptionPane.appendChild(div);
+      autoScroll(transcriptionPane);
+    });
+
+    socket.on("transcription-translation", (data) => {
+      const div = transcriptionPane.querySelector(`[data-transcription-id="${data.id}"]`);
+      if (!div) return;
+
+      const transDiv = document.createElement("div");
+      transDiv.className = "translation";
+      transDiv.textContent = data.translation;
+      div.appendChild(transDiv);
       autoScroll(transcriptionPane);
     });
 

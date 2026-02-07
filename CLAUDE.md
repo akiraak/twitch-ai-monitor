@@ -76,7 +76,8 @@ npm start  # node server.js — デフォルト http://localhost:3000
 - `chat-message` ({id, channel, username, message, timestamp}) — チャットメッセージ
 - `chat-translation` ({id, translation}) — 翻訳結果 (元メッセージのidに紐づく)
 - `channel-list` (string[]) — 保存済みチャンネル候補一覧
-- `transcription` ({text, timestamp}) — 音声文字起こし結果
+- `transcription` ({id, text, timestamp}) — 音声文字起こし結果
+- `transcription-translation` ({id, translation}) — 文字起こしの翻訳結果
 
 ## コーディング規約
 

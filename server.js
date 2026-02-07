@@ -96,6 +96,35 @@ async function translateIfNeeded(msgData) {
   }
 }
 
+const TRANSCRIPTION_SYSTEM_INSTRUCTION = `あなたはTwitch配信者の発言の翻訳者です。
+
+ルール:
+- 発言が日本語の場合、正確に「SKIP」とだけ返してください
+- それ以外は自然な日本語に翻訳してください
+- 翻訳文のみを返してください。説明や注釈は不要です`;
+
+let transcriptionId = 0;
+
+async function translateTranscription(id, text) {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `翻訳対象: ${text}`,
+      config: {
+        systemInstruction: TRANSCRIPTION_SYSTEM_INSTRUCTION,
+        thinkingConfig: { thinkingLevel: "minimal" },
+      },
+    });
+
+    const translation = response.text.trim();
+    if (translation && translation !== "SKIP") {
+      io.emit("transcription-translation", { id, translation });
+    }
+  } catch (e) {
+    console.error("Transcription translation error:", e.message);
+  }
+}
+
 // Transcription
 let transcription = null;
 
@@ -138,10 +167,13 @@ async function transcribeChunk(pcmChunk) {
 
     const text = response.text.trim();
     if (text) {
+      const id = ++transcriptionId;
       io.emit("transcription", {
+        id,
         text,
         timestamp: new Date().toISOString(),
       });
+      translateTranscription(id, text);
     }
   } catch (e) {
     console.error("Transcription error:", e.message);
