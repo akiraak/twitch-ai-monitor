@@ -15,7 +15,6 @@ Twitchチャットをリアルタイムで監視し、非日本語コメント�
 
 ```
 server.js          # メインサーバー (Express + Socket.IO + TMI + SQLite + Gemini)
-index.js           # 旧スタンドアロンbot (未使用)
 public/index.html  # Web UI (HTML/CSS/JS一体型)
 .env               # 環境変数 (TWITCH_TOKEN, BOT_NAME, GEMINI_API_KEY)
 data.db            # SQLiteデータベース (自動生成)
