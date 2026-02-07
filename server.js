@@ -122,7 +122,7 @@ async function translateIfNeeded(msgData) {
 const TRANSCRIPTION_SYSTEM_INSTRUCTION = `あなたはTwitch配信者の発言の翻訳者です。
 
 ルール:
-- 発言が日本語の場合、正確に「SKIP」とだけ返してください
+- 発言が日本語の場合、英語に翻訳してください
 - それ以外は自然な日本語に翻訳してください
 - 会話の文脈を考慮して翻訳してください
 - 翻訳文のみを返してください。説明や注釈は不要です`;
