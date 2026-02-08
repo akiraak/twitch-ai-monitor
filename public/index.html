@@ -502,6 +502,14 @@
       autoScroll(timeline);
     });
 
+    socket.on("transcription-corrected", (data) => {
+      const div = timeline.querySelector(`[data-transcription-id="${data.id}"]`);
+      if (!div) return;
+      const textSpan = div.querySelector(".text");
+      if (textSpan) textSpan.textContent = data.corrected;
+      autoScroll(timeline);
+    });
+
     socket.on("transcription-translation", (data) => {
       const div = timeline.querySelector(`[data-transcription-id="${data.id}"]`);
       if (!div) return;

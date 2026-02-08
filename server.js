@@ -68,11 +68,18 @@ const transcriber = new Transcriber(openai, {
     }
     const id = ++transcriptionId;
     io.emit("transcription", { id, text, timestamp });
-    translator.translateTranscription(text, currentChannel, currentLanguage)
-      .then((translation) => {
-        if (translation) io.emit("transcription-translation", { id, translation });
+    translator.correctTranscription(text, currentChannel)
+      .then((corrected) => {
+        if (corrected && corrected !== text) {
+          io.emit("transcription-corrected", { id, corrected });
+        }
+        const textForTranslation = corrected || text;
+        return translator.translateTranscription(textForTranslation, currentChannel, currentLanguage)
+          .then((translation) => {
+            if (translation) io.emit("transcription-translation", { id, translation });
+          });
       })
-      .catch((e) => console.error("Transcription translation error:", e.message));
+      .catch((e) => console.error("Transcription correction/translation error:", e.message));
   },
   onStopped: () => {
     io.emit("transcription-stopped");
