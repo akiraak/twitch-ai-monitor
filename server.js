@@ -1,10 +1,50 @@
 require("dotenv").config();
+const { execFileSync } = require("child_process");
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const tmi = require("tmi.js");
 const { GoogleGenAI } = require("@google/genai");
 const OpenAI = require("openai");
+
+// --- 起動時の依存チェック ---
+function checkDependencies() {
+  const required = [
+    { cmd: "streamlink", args: ["--version"], hint: "pip install streamlink / pipx install streamlink" },
+    { cmd: "ffmpeg", args: ["-version"], hint: "sudo apt install ffmpeg" },
+  ];
+  const missing = [];
+  for (const dep of required) {
+    try {
+      execFileSync(dep.cmd, dep.args, { stdio: "ignore" });
+    } catch {
+      missing.push(dep);
+    }
+  }
+  if (missing.length > 0) {
+    console.error("必要な外部コマンドが見つかりません:");
+    for (const dep of missing) {
+      console.error(`  - ${dep.cmd} (インストール: ${dep.hint})`);
+    }
+    process.exit(1);
+  }
+
+  const envVars = [
+    { name: "TWITCH_TOKEN", desc: "Twitch OAuth トークン" },
+    { name: "BOT_NAME", desc: "Twitch bot ユーザー名" },
+    { name: "GEMINI_API_KEY", desc: "Google Gemini API キー" },
+    { name: "OPENAI_API_KEY", desc: "OpenAI API キー" },
+  ];
+  const missingEnv = envVars.filter((v) => !process.env[v.name]);
+  if (missingEnv.length > 0) {
+    console.error("必要な環境変数が設定されていません (.env を確認してください):");
+    for (const v of missingEnv) {
+      console.error(`  - ${v.name}: ${v.desc}`);
+    }
+    process.exit(1);
+  }
+}
+checkDependencies();
 
 const { upsertChannel, getChannels, insertMessage, insertTranscription, getRecentMessages } = require("./lib/db");
 const { createTranslator } = require("./lib/translator");
