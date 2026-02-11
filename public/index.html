@@ -77,10 +77,12 @@
       flex: 1;
       min-width: 120px;
       max-width: 300px;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     #channel-input:focus {
       outline: none;
       border-color: #bf94ff;
+      box-shadow: 0 0 0 2px rgba(145,71,255,0.25);
     }
     #channel-input:disabled {
       opacity: 0.5;
@@ -92,6 +94,7 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
     }
     #btn-start {
       background: #9147ff;
@@ -117,6 +120,7 @@
     #language-select:focus {
       outline: none;
       border-color: #bf94ff;
+      box-shadow: 0 0 0 2px rgba(145,71,255,0.25);
     }
     #transcription-toggle {
       display: flex;
@@ -352,6 +356,7 @@
       padding: 4px 8px;
       line-height: 1;
       border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
     }
     #btn-settings:hover { color: #efeff1; background: rgba(255,255,255,0.1); }
     #settings-overlay {
@@ -433,10 +438,12 @@
       border-radius: 4px;
       font-size: 14px;
       font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .settings-field input:focus {
       outline: none;
       border-color: #bf94ff;
+      box-shadow: 0 0 0 2px rgba(145,71,255,0.25);
     }
     #settings-actions {
       display: flex;
@@ -453,6 +460,7 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
     }
     #settings-save:hover { background: #772ce8; }
     #settings-save:disabled { opacity: 0.5; cursor: default; }
@@ -465,6 +473,7 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s;
     }
     #settings-cancel:hover { background: #3a3a3d; }
     #settings-error {
@@ -490,6 +499,7 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s, color 0.2s;
     }
     #settings-clear-data:hover {
       background: #eb0400;
