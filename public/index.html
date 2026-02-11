@@ -140,6 +140,7 @@
       display: flex;
       flex-direction: column;
       min-height: 0;
+      position: relative;
     }
     #timeline {
       flex: 1;
@@ -161,6 +162,25 @@
     }
     #timeline.hide-transcription .transcription {
       display: none;
+    }
+    #timeline-placeholder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #6b6b7b;
+      pointer-events: none;
+    }
+    #timeline-placeholder .placeholder-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #8a8a96;
+    }
+    #timeline-placeholder .placeholder-hint {
+      font-size: 13px;
+      line-height: 1.6;
     }
     .msg {
       padding: 6px 8px;
@@ -473,6 +493,10 @@
   </div>
   <div id="main">
     <div id="timeline"></div>
+    <div id="timeline-placeholder">
+      <div class="placeholder-title">チャンネル名を入力して「開始」を押してください</div>
+      <div class="placeholder-hint">チャットと配信者の発言がここに表示されます</div>
+    </div>
   </div>
   <div id="translator">
     <div id="translator-header">
@@ -537,6 +561,7 @@
     const toggleTranscription = document.getElementById("toggle-transcription");
     const languageSelect = document.getElementById("language-select");
     const translatorHint = document.querySelector("#translator-header .hint");
+    const timelinePlaceholder = document.getElementById("timeline-placeholder");
     const socket = io();
 
     const LANG_HINTS = {
@@ -623,12 +648,14 @@
 
     socket.on("current-channel", (channel) => {
       setConnectedUI(channel);
+      timelinePlaceholder.classList.add("hidden");
       status.textContent = "接続中";
       status.className = "connected";
     });
 
     socket.on("channel-joined", (channel) => {
       timeline.innerHTML = "";
+      timelinePlaceholder.classList.add("hidden");
       btnStart.disabled = false;
       setConnectedUI(channel);
       status.textContent = "接続中";
@@ -638,6 +665,7 @@
     socket.on("channel-left", () => {
       btnStart.disabled = false;
       setDisconnectedUI();
+      timelinePlaceholder.classList.remove("hidden");
       status.textContent = "待機中";
       status.className = "";
     });
