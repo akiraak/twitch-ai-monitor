@@ -1,4 +1,4 @@
-# Twitch AI Monitor
+# Twitch Translato
 
 Twitchチャットをリアルタイムで監視し、非日本語コメントをAIで日本語訳するWebアプリケーション。
 
