@@ -45,11 +45,12 @@
     }
     #status::before {
       content: "";
-      display: inline-block;
+      display: block;
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: #adadb8;
+      flex-shrink: 0;
     }
     #status.connected { color: #00e676; }
     #status.connected::before { background: #00e676; }
@@ -529,8 +530,6 @@
   <header>
     <div id="header-left">
       Twitch Translator
-      <a id="header-channel" href="#" target="_blank" rel="noopener"></a>
-      <span id="status">待機中</span>
     </div>
     <div id="header-right">
       <button id="btn-settings" title="設定">&#9881;</button>
@@ -541,6 +540,8 @@
     <datalist id="channel-list"></datalist>
     <button id="btn-start">開始</button>
     <button id="btn-stop" class="hidden">停止</button>
+    <a id="header-channel" href="#" target="_blank" rel="noopener"></a>
+    <span id="status">待機中</span>
   </div>
   <div id="content">
     <div id="main" class="idle">
