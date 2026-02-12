@@ -194,24 +194,28 @@
     #timeline.hide-transcription .transcription {
       display: none;
     }
+    #main.idle #timeline {
+      opacity: 0.25;
+      pointer-events: none;
+    }
     #timeline-placeholder {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
-      color: #6b6b7b;
       pointer-events: none;
     }
     #timeline-placeholder .placeholder-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       margin-bottom: 6px;
-      color: #8a8a96;
+      color: #efeff1;
     }
     #timeline-placeholder .placeholder-hint {
       font-size: 13px;
       line-height: 1.6;
+      color: #adadb8;
     }
     .msg {
       padding: 6px 8px;
@@ -539,7 +543,7 @@
     <button id="btn-stop" class="hidden">停止</button>
   </div>
   <div id="content">
-    <div id="main">
+    <div id="main" class="idle">
       <div id="timeline"></div>
       <div id="timeline-placeholder">
         <div class="placeholder-title">チャンネル名を入力して「開始」を押してください</div>
@@ -716,6 +720,7 @@
     socket.on("current-channel", (channel) => {
       setConnectedUI(channel);
       timelinePlaceholder.classList.add("hidden");
+      document.getElementById("main").classList.remove("idle");
       status.textContent = "接続中";
       status.className = "connected";
     });
@@ -723,6 +728,7 @@
     socket.on("channel-joined", (channel) => {
       timeline.innerHTML = "";
       timelinePlaceholder.classList.add("hidden");
+      document.getElementById("main").classList.remove("idle");
       btnStart.disabled = false;
       setConnectedUI(channel);
       status.textContent = "接続中";
@@ -733,6 +739,7 @@
       btnStart.disabled = false;
       setDisconnectedUI();
       timelinePlaceholder.classList.remove("hidden");
+      document.getElementById("main").classList.add("idle");
       status.textContent = "待機中";
       status.className = "";
     });
