@@ -1,4 +1,4 @@
-# Twitch Translator
+# Twitclate
 
 Twitchチャットをリアルタイムで監視し、非日本語コメントをAIで日本語訳するWebアプリケーション。
 
@@ -47,7 +47,7 @@ dotenv / `.env` ファイルは使用しない。
 | `OPENAI_API_KEY` | OpenAI API キー (Whisper文字起こし用) |
 
 環境変数 `PORT` でサーバーポートを変更可能 (デフォルト: 3000)。
-環境変数 `TWITCH_TRANSLATOR_DB_PATH` で DB ファイルパスを変更可能 (Electron では userData に自動設定)。
+環境変数 `TWITCLATE_DB_PATH` で DB ファイルパスを変更可能 (Electron では userData に自動設定)。
 
 ## アーキテクチャ
 

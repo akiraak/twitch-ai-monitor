@@ -1,5 +1,5 @@
 {
-  "name": "twitch-translator",
+  "name": "twitclate",
   "version": "1.0.0",
   "description": "Twitchチャットをリアルタイムで監視し、非日本語コメントをAIで日本語訳するアプリ",
   "main": "electron.js",
@@ -30,7 +30,7 @@
   },
   "build": {
     "appId": "com.twitch-translator.app",
-    "productName": "Twitch Translator",
+    "productName": "Twitclate",
     "publish": {
       "provider": "github"
     },

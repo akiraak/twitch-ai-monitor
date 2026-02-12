@@ -1,4 +1,4 @@
-# Twitch Translator
+# Twitclate
 
 Twitchチャットをリアルタイムで監視し、非日本語コメントをAIで自動翻訳するアプリケーションです。
 配信者の音声をリアルタイムで文字起こし・翻訳する機能も搭載しています。
@@ -45,7 +45,7 @@ http://localhost:3000 を開き、初回起動時に表示される設定モー�
 
 ## ダウンロード
 
-[ダウンロードページ](https://akiraak.github.io/twitch-translator/) から最新の Windows 版インストーラーを取得できます。
+[ダウンロードページ](https://akiraak.github.io/twitclate/) から最新の Windows 版インストーラーを取得できます。
 
 ## Electron デスクトップアプリ
 
