@@ -292,6 +292,69 @@
       display: flex;
       flex-direction: column;
     }
+    #topic-summary {
+      display: flex;
+      flex-direction: column;
+    }
+    #topic-summary-header {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-bottom: 2px solid #3498db;
+      background: #1a1a1d;
+    }
+    #topic-summary-header .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3498db;
+    }
+    #topic-summary-header .hint {
+      font-size: 11px;
+      color: #8a8a96;
+      margin-left: auto;
+    }
+    #topic-summary-body {
+      padding: 8px 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #c0c0c8;
+      border-bottom: 1px solid #303032;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #topic-summary-body::-webkit-scrollbar {
+      width: 4px;
+    }
+    #topic-summary-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #topic-summary-body::-webkit-scrollbar-thumb {
+      background: #3a3a3d;
+      border-radius: 2px;
+    }
+    #topic-summary-body .summary-time {
+      font-size: 11px;
+      color: #8a8a96;
+      margin-top: 6px;
+    }
+    #topic-summary-body .summary-time:first-child {
+      margin-top: 0;
+    }
+    #topic-summary-body .placeholder {
+      color: #6b6b7b;
+    }
+    #topic-summary-body ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #topic-summary-body ul li {
+      padding: 2px 0;
+    }
+    #topic-summary-body ul li::before {
+      content: "・";
+      color: #3498db;
+    }
     #translator {
       display: flex;
       flex-direction: column;
@@ -553,6 +616,15 @@
       </div>
     </div>
     <div id="sidebar">
+      <div id="topic-summary">
+        <div id="topic-summary-header">
+          <span class="label">話題</span>
+          <span class="hint">自動更新</span>
+        </div>
+        <div id="topic-summary-body">
+          <span class="placeholder">チャンネルに接続すると話題が表示されます</span>
+        </div>
+      </div>
       <div id="translator">
         <div id="translator-header">
           <span class="label">翻訳</span>
@@ -653,6 +725,7 @@
     const toggleTranscription = document.getElementById("toggle-transcription");
     const languageSelect = document.getElementById("language-select");
     const timelinePlaceholder = document.getElementById("timeline-placeholder");
+    const topicSummaryBody = document.getElementById("topic-summary-body");
     const socket = io();
 
     languageSelect.addEventListener("change", () => {
@@ -819,6 +892,32 @@
       transDiv.textContent = data.translation;
       div.appendChild(transDiv);
       autoScroll(timeline);
+    });
+
+    socket.on("topic-summary", (summary) => {
+      const lines = summary.split("\n").map(l => l.replace(/^・\s*/, "").trim()).filter(Boolean);
+      if (lines.length === 0) return;
+      // プレースホルダーを除去
+      const placeholder = topicSummaryBody.querySelector(".placeholder");
+      if (placeholder) placeholder.remove();
+      // タイムスタンプ
+      const timeDiv = document.createElement("div");
+      timeDiv.className = "summary-time";
+      timeDiv.textContent = new Date().toLocaleTimeString();
+      topicSummaryBody.appendChild(timeDiv);
+      // 箇条書き
+      const ul = document.createElement("ul");
+      lines.forEach(line => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        ul.appendChild(li);
+      });
+      topicSummaryBody.appendChild(ul);
+      topicSummaryBody.scrollTop = topicSummaryBody.scrollHeight;
+    });
+
+    socket.on("topic-summary-cleared", () => {
+      // 話題の表示は維持する（クリアしない）
     });
 
     const translateInput = document.getElementById("translate-input");

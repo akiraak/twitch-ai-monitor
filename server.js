@@ -70,6 +70,40 @@ let currentChannel = null;
 let currentLanguage = "ja";
 let transcriptionId = 0;
 
+// --- トピック要約 ---
+let summaryActivityCount = 0;
+let summaryTimer = null;
+let lastSummaryText = null;
+
+function startSummaryTimer() {
+  stopSummaryTimer();
+  summaryActivityCount = 0;
+  lastSummaryText = null;
+  summaryTimer = setInterval(async () => {
+    if (summaryActivityCount < 5 || !translator || !currentChannel) return;
+    summaryActivityCount = 0;
+    try {
+      const summary = await translator.summarizeTopic(currentChannel, currentLanguage);
+      if (!summary) return;
+      if (summary === lastSummaryText) return;
+      lastSummaryText = summary;
+      io.emit("topic-summary", summary);
+    } catch (e) {
+      console.error("Topic summary error:", e.message);
+    }
+  }, 30000);
+}
+
+function stopSummaryTimer() {
+  if (summaryTimer) {
+    clearInterval(summaryTimer);
+    summaryTimer = null;
+  }
+  summaryActivityCount = 0;
+  lastSummaryText = null;
+  io.emit("topic-summary-cleared");
+}
+
 // TTS readout detection
 const TTS_WINDOW_SECONDS = 30;
 const TTS_SIMILARITY_THRESHOLD = 0.5;
@@ -123,6 +157,7 @@ function initializeServices(settings) {
       }
       const id = ++transcriptionId;
       io.emit("transcription", { id, text, timestamp });
+      summaryActivityCount++;
       translator.correctTranscription(text, currentChannel)
         .then((corrected) => {
           if (corrected && corrected !== text) {
@@ -172,6 +207,7 @@ function createTmiClient(channel) {
     const data = { id, channel: ch, username: tags["display-name"], message, timestamp };
     console.log(`[${ch}] ${data.username}: ${message}`);
     io.emit("chat-message", data);
+    summaryActivityCount++;
     translator.translateChat(data, currentLanguage)
       .then((translation) => {
         if (translation) io.emit("chat-translation", { id: data.id, translation });
@@ -190,6 +226,9 @@ io.on("connection", (socket) => {
 
   if (currentChannel) {
     socket.emit("current-channel", currentChannel);
+    if (lastSummaryText) {
+      socket.emit("topic-summary", lastSummaryText);
+    }
   }
   socket.emit("channel-list", getChannels.all().map((r) => r.name));
   socket.emit("current-language", currentLanguage);
@@ -240,6 +279,7 @@ io.on("connection", (socket) => {
   socket.on("clear-all-data", async () => {
     try {
       // 接続中のチャンネルを切断
+      stopSummaryTimer();
       if (transcriber) transcriber.stop();
       if (tmiClient) {
         try { await tmiClient.disconnect(); } catch (e) {}
@@ -292,6 +332,7 @@ io.on("connection", (socket) => {
       console.log(`Connected to #${channel}`);
       io.emit("channel-joined", channel);
       io.emit("channel-list", getChannels.all().map((r) => r.name));
+      startSummaryTimer();
       transcriber.start(channel).catch((e) => console.error("Transcriber start error:", e));
     } catch (e) {
       console.error(`Failed to connect to #${channel}:`, e);
@@ -334,6 +375,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("leave-channel", async () => {
+    stopSummaryTimer();
     if (transcriber) transcriber.stop();
     if (tmiClient) {
       try { await tmiClient.disconnect(); } catch (e) {}

@@ -15,6 +15,7 @@ Twitchチャットをリアルタイムで監視し、非日本語コメント�
 - 文字起こしプロセスのエラー時に自動リトライ
 - チャットTTS読み上げの重複排除 (バイグラム類似度による自動検出)
 - チャットと配信者の発言を時系列で表示 (配信者表示ON/OFF切替可)
+- チャットトピック自動要約 (30秒ごとに話題を箇条書きでサイドバーに表示)
 - 手動翻訳機能 (右サイドバー、選択言語 → 英語 / その他 → 選択言語)
 - 接続チャンネル履歴のサジェスト表示
 - Web UIから設定可能 (APIキー等はSQLiteに保存)
@@ -75,7 +76,7 @@ server.js              # エントリポイント (Express + Socket.IO + TMI の
 electron.js            # Electron メインプロセス (ウィンドウ管理・DBパス設定・ログ出力)
 lib/db.js              # SQLite スキーマ + クエリ
 lib/audio.js           # 音声ユーティリティ (WAV変換, RMS計算)
-lib/translator.js      # Gemini翻訳 (チャット・文字起こし・手動)
+lib/translator.js      # Gemini翻訳 (チャット・文字起こし・手動・トピック要約)
 lib/transcription.js   # 文字起こしパイプライン (VAD・Whisper・リトライ)
 lib/twitch-hls.js      # Twitch HLS URL取得 (GQL API + Usher API)
 public/index.html      # Web UI (設定モーダル含む)

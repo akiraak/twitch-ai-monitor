@@ -19,7 +19,7 @@ server.js              # エントリポイント (Express + Socket.IO + TMI の
 electron.js            # Electron メインプロセス (ウィンドウ管理・DBパス設定・ログ出力)
 lib/db.js              # SQLite スキーマ + prepared statements
 lib/audio.js           # 音声ユーティリティ (createWavBuffer, calcRMS)
-lib/translator.js      # Gemini翻訳 (チャット・文字起こし・手動の3種 + 文脈構築)
+lib/translator.js      # Gemini翻訳 (チャット・文字起こし・手動・トピック要約 + 文脈構築)
 lib/transcription.js   # Transcriberクラス (VAD・Whisper・プロセス管理・リトライ)
 lib/twitch-hls.js      # Twitch HLS URL取得 (GQL API + Usher API)
 public/index.html      # Web UI (HTML/CSS/JS一体型、設定モーダル含む)
@@ -68,15 +68,16 @@ dotenv / `.env` ファイルは使用しない。
 - チャットTTS読み上げの重複排除: 直近30秒のチャットと文字起こしをバイグラム類似度で比較し、TTS読み上げと判定されたものはスキップ
 - 文字起こしのハルシネーション防止: 定型的な誤認識フレーズ (「ご視聴ありがとうございました」等) をブラックリストで除外
 - 文字起こし結果はSQLiteに保存され、Geminiで翻訳 (選択言語 → 英語 / その他 → 選択言語)
-- Web UIは2ペインレイアウト: 左にタイムライン (チャットと配信者の発言を時系列で表示、配信者表示ON/OFF切替可)、右にサイドバー (手動翻訳エリア等)
+- Web UIは2ペインレイアウト: 左にタイムライン (チャットと配信者の発言を時系列で表示、配信者表示ON/OFF切替可)、右にサイドバー (トピック要約・手動翻訳エリア等)
+- チャットトピック自動要約: 30秒間隔で直近5分の会話を分析し、話題を箇条書きでサイドバーに表示。5件以上の新メッセージがある場合のみ実行。前回と同じ内容は送信しない。履歴はタイムスタンプ付きで蓄積表示
 - 待機時はタイムラインを暗転させてプレースホルダーを表示
 
 ## モジュール設計
 
-- **server.js**: エントリポイント。起動時のffmpegチェック、設定に基づくAIクライアントの遅延初期化、Socket.IO/TMIイベントの配線、TTS読み上げ検出ロジック、設定管理イベント
+- **server.js**: エントリポイント。起動時のffmpegチェック、設定に基づくAIクライアントの遅延初期化、Socket.IO/TMIイベントの配線、TTS読み上げ検出ロジック、トピック要約タイマー管理、設定管理イベント
 - **lib/db.js**: DBスキーマ定義とprepared statementsのエクスポート。他モジュールから `require` して使用
 - **lib/audio.js**: 純粋関数 (`createWavBuffer`, `calcRMS`)。外部依存なし
-- **lib/translator.js**: `createTranslator(ai)` ファクトリで生成。`buildContext()` で文脈構築を共通化。翻訳結果の文字列を返すだけでSocket.IOに依存しない。`langCode` 引数で翻訳方向を動的に切替。`correctTranscription()` で文字起こしの誤認識補正も担当
+- **lib/translator.js**: `createTranslator(ai)` ファクトリで生成。`buildContext()` で文脈構築を共通化。翻訳結果の文字列を返すだけでSocket.IOに依存しない。`langCode` 引数で翻訳方向を動的に切替。`correctTranscription()` で文字起こしの誤認識補正、`summarizeTopic()` でチャットトピック要約も担当
 - **lib/twitch-hls.js**: `getTwitchAudioUrl(channel)` で Twitch GQL API + Usher API から HLS audio_only URL を取得。外部依存なし (Node.js fetch のみ)
 - **lib/transcription.js**: `Transcriber` クラス。VAD状態・Whisperセマフォ・リトライ状態をインスタンスにカプセル化。`onTranscription`/`onStopped` コールバックで server.js と疎結合
 
@@ -139,6 +140,8 @@ dotenv / `.env` ファイルは使用しない。
 - `manual-translate-result` (translation: string) — 手動翻訳結果
 - `settings-status` ({configured: boolean, settings: object}) — 設定状態 (接続時 + 保存後に送信)
 - `settings-data` (object) — マスク済み設定値 (get-settings の応答)
+- `topic-summary` (summary: string) — チャットトピック要約 (箇条書きテキスト)
+- `topic-summary-cleared` — トピック要約クリア通知
 - `settings-error` (message: string) — 設定エラーメッセージ
 - `data-cleared` — 全データ削除完了通知
 
